@@ -121,7 +121,7 @@ class DashboardPage extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'Stok Kritis',
                 style: Theme.of(
                   context,
@@ -171,7 +171,7 @@ class DashboardPage extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'Transaksi Terakhir',
                 style: Theme.of(
                   context,
