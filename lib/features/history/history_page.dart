@@ -379,21 +379,28 @@ class _HistoryCard extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF1E293B),
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white10),
+        border: Border.all(color: Theme.of(context).colorScheme.outline),
       ),
       child: ExpansionTile(
         tilePadding: const EdgeInsets.symmetric(horizontal: 16),
         childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-        leading: const Icon(Icons.output, color: Colors.orange),
+        leading: Icon(
+          Icons.output,
+          color: Theme.of(context).colorScheme.tertiary,
+        ),
         title: Text(
           item.itemName,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
         ),
         subtitle: Text(
           '${item.quantity} ${item.unit} - ${item.division}\n$dateText',
-          style: const TextStyle(color: Colors.white60),
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
         ),
         children: [
           Align(

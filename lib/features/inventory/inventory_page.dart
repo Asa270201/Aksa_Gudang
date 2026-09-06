@@ -59,9 +59,11 @@ class _InventoryPageState extends State<InventoryPage> {
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 16),
               decoration: BoxDecoration(
-                color: const Color(0xFF1E293B),
+                color: Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.white10),
+                border: Border.all(
+                  color: Theme.of(context).colorScheme.outline,
+                ),
               ),
               child: const TabBar(
                 tabs: [
@@ -86,7 +88,7 @@ class _InventoryPageState extends State<InventoryPage> {
                   hintText: 'Cari barang...',
                   prefixIcon: const Icon(Icons.search),
                   filled: true,
-                  fillColor: const Color(0xFF1E293B),
+                  fillColor: Theme.of(context).colorScheme.surface,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
                     borderSide: BorderSide.none,
@@ -154,9 +156,11 @@ class _ItemList extends StatelessWidget {
               margin: const EdgeInsets.only(bottom: 12),
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: const Color(0xFF1E293B),
+                color: Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: Colors.white10),
+                border: Border.all(
+                  color: Theme.of(context).colorScheme.outline,
+                ),
               ),
               child: Row(
                 children: [
@@ -204,13 +208,13 @@ class _ItemList extends StatelessWidget {
                                 vertical: 4,
                               ),
                               decoration: BoxDecoration(
-                                color: Colors.green.withOpacity(.15),
+                                color: const Color(0xFF50C878).withOpacity(.15),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Text(
                                 'Stok ${item.stok}',
                                 style: const TextStyle(
-                                  color: Colors.green,
+                                  color: const Color(0xFF50C878),
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -224,13 +228,13 @@ class _ItemList extends StatelessWidget {
                                 vertical: 4,
                               ),
                               decoration: BoxDecoration(
-                                color: Colors.blue.withOpacity(.15),
+                                color: const Color(0xFF63B3ED).withOpacity(.15),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Text(
                                 'Rp ${item.hargaSatuan.toStringAsFixed(0)}',
                                 style: const TextStyle(
-                                  color: Colors.blue,
+                                  color: const Color(0xFF63B3ED),
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -273,13 +277,13 @@ class _ItemList extends StatelessWidget {
   Color _getColor() {
     switch (category) {
       case 'APD':
-        return Colors.blue;
+        return const Color(0xFF63B3ED);
 
       case 'Alat Panen':
-        return Colors.green;
+        return const Color(0xFF50C878);
 
       default:
-        return Colors.orange;
+        return const Color(0xFFE8B44F);
     }
   }
 }

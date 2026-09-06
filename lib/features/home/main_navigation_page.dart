@@ -36,7 +36,7 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
           decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.surface,
             border: Border(
-              top: BorderSide(color: Theme.of(context).dividerColor),
+              top: BorderSide(color: Theme.of(context).colorScheme.outline),
             ),
           ),
           child: SingleChildScrollView(
@@ -123,11 +123,11 @@ class _NavItem extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(14),
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 5),
+          padding: const EdgeInsets.symmetric(vertical: 6),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, color: color),
+              Icon(icon, color: color, size: 22),
               const SizedBox(height: 3),
               Text(
                 label,

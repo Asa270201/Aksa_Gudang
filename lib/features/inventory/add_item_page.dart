@@ -190,7 +190,7 @@ class _AddItemPageState extends State<AddItemPage> {
     return InputDecoration(
       labelText: label,
       filled: true,
-      fillColor: const Color(0xFF1E293B),
+      fillColor: Theme.of(context).colorScheme.surface,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
         borderSide: BorderSide.none,

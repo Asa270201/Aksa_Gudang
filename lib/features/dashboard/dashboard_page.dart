@@ -84,25 +84,25 @@ class DashboardPage extends StatelessWidget {
               title: 'APD',
               total: '${_countCategory(items, 'APD')}',
               icon: Icons.health_and_safety,
-              color: Colors.blue,
+              color: const Color(0xFF63B3ED),
             ),
             CategoryCard(
               title: 'Alat Panen',
               total: '${_countCategory(items, 'Alat Panen')}',
               icon: Icons.agriculture,
-              color: Colors.green,
+              color: const Color(0xFF50C878),
             ),
             CategoryCard(
               title: 'Barang Umum',
               total: '${_countCategory(items, 'Umum')}',
               icon: Icons.inventory_2,
-              color: Colors.orange,
+              color: const Color(0xFFE8B44F),
             ),
             CategoryCard(
               title: 'Stok Kritis',
               total: '${criticalItems.length}',
               icon: Icons.warning_amber_rounded,
-              color: Colors.red,
+              color: const Color(0xFFE87968),
             ),
           ],
         ),
@@ -114,16 +114,18 @@ class DashboardPage extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: const Color(0xFF1E293B),
+            color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.white10),
+            border: Border.all(color: Theme.of(context).colorScheme.outline),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
                 'Stok Kritis',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
               ),
 
               const SizedBox(height: 16),
@@ -142,7 +144,9 @@ class DashboardPage extends StatelessWidget {
                           contentPadding: EdgeInsets.zero,
                           leading: Icon(
                             Icons.warning_amber_rounded,
-                            color: item.stok == 0 ? Colors.red : Colors.orange,
+                            color: item.stok == 0
+                                ? const Color(0xFFE87968)
+                                : const Color(0xFFE8B44F),
                           ),
                           title: Text(item.nama),
                           subtitle: Text('Sisa ${item.stok} ${item.satuan}'),
@@ -160,16 +164,18 @@ class DashboardPage extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: const Color(0xFF1E293B),
+            color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.white10),
+            border: Border.all(color: Theme.of(context).colorScheme.outline),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
                 'Transaksi Terakhir',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
               ),
 
               const SizedBox(height: 16),

@@ -12,7 +12,7 @@ class DivisionBarChart extends StatelessWidget {
       height: 320,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xff1E293B),
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Column(
@@ -33,21 +33,33 @@ class DivisionBarChart extends StatelessWidget {
                   BarChartGroupData(
                     x: 0,
                     barRods: [
-                      BarChartRodData(toY: 180, color: Colors.green, width: 20),
+                      BarChartRodData(
+                        toY: 180,
+                        color: const Color(0xFF50C878),
+                        width: 20,
+                      ),
                     ],
                   ),
 
                   BarChartGroupData(
                     x: 1,
                     barRods: [
-                      BarChartRodData(toY: 120, color: Colors.blue, width: 20),
+                      BarChartRodData(
+                        toY: 120,
+                        color: const Color(0xFF63B3ED),
+                        width: 20,
+                      ),
                     ],
                   ),
 
                   BarChartGroupData(
                     x: 2,
                     barRods: [
-                      BarChartRodData(toY: 80, color: Colors.orange, width: 20),
+                      BarChartRodData(
+                        toY: 80,
+                        color: const Color(0xFFE8B44F),
+                        width: 20,
+                      ),
                     ],
                   ),
                 ],
