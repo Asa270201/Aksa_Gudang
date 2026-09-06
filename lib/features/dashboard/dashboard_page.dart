@@ -111,6 +111,8 @@ class DashboardPage extends StatelessWidget {
 
         ExpensePieChart(divisionPickupCounts: divisionPickupCounts),
 
+        const SizedBox(height: 24),
+
         Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
