@@ -397,6 +397,7 @@ class _HistoryCard extends StatelessWidget {
           ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
         ),
         subtitle: Text(
+          '${item.bonNumber == null ? 'Tanpa nomor bon' : 'Bon ${item.bonNumber}'}\n'
           '${item.quantity} ${item.unit} - ${item.division}\n$dateText',
           style: TextStyle(
             color: Theme.of(context).colorScheme.onSurfaceVariant,

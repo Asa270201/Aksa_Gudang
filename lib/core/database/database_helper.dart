@@ -27,7 +27,7 @@ class DatabaseHelper {
 
     return openDatabase(
       path,
-      version: 7,
+      version: 8,
       onCreate: _createDatabase,
       onUpgrade: _onUpgrade,
       onConfigure: (db) async {
@@ -83,6 +83,7 @@ class DatabaseHelper {
     await db.execute('''
       CREATE TABLE transactions (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
+        nomor_bon TEXT,
         nomor_ba TEXT,
         tanggal TEXT NOT NULL,
         jenis TEXT NOT NULL,
@@ -175,6 +176,10 @@ class DatabaseHelper {
       await db.execute(
         'ALTER TABLE transactions ADD COLUMN foto_dokumentasi TEXT',
       );
+    }
+
+    if (oldVersion < 8) {
+      await db.execute('ALTER TABLE transactions ADD COLUMN nomor_bon TEXT');
     }
   }
 

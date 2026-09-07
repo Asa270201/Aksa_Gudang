@@ -16,6 +16,7 @@ class _TakeItemPageState extends State<TakeItemPage> {
   final InventoryRepository _inventoryRepository = InventoryRepository();
   final TransactionRepository _transactionRepository = TransactionRepository();
   final recipientController = TextEditingController();
+  final bonNumberController = TextEditingController();
   final foremanController = TextEditingController();
   final assistantController = TextEditingController();
   final noteController = TextEditingController();
@@ -24,7 +25,9 @@ class _TakeItemPageState extends State<TakeItemPage> {
   List<InventoryItem> items = [];
   List<String> divisions = [];
   InventoryItem? selectedItem;
+  final List<TransactionLine> transactionLines = [];
   String? selectedDivision;
+  DateTime selectedDate = DateTime.now();
   String selectedCategory = 'Semua Kategori';
   bool isLoading = true;
   bool isSaving = false;
@@ -47,6 +50,7 @@ class _TakeItemPageState extends State<TakeItemPage> {
   @override
   void dispose() {
     recipientController.dispose();
+    bonNumberController.dispose();
     foremanController.dispose();
     assistantController.dispose();
     noteController.dispose();
@@ -74,19 +78,8 @@ class _TakeItemPageState extends State<TakeItemPage> {
   }
 
   Future<void> _saveTransaction() async {
-    final item = selectedItem;
-    final quantity = int.tryParse(quantityController.text.trim());
-
-    if (item == null) {
-      _showMessage('Pilih barang terlebih dahulu');
-      return;
-    }
-    if (quantity == null || quantity <= 0) {
-      _showMessage('Jumlah harus berupa angka lebih dari 0');
-      return;
-    }
-    if (quantity > item.stok) {
-      _showMessage('Jumlah melebihi stok tersedia (${item.stok})');
+    if (transactionLines.isEmpty) {
+      _showMessage('Tambahkan minimal satu barang ke bon');
       return;
     }
     if (noteController.text.trim().isEmpty) {
@@ -120,9 +113,10 @@ class _TakeItemPageState extends State<TakeItemPage> {
 
     setState(() => isSaving = true);
     try {
-      await _transactionRepository.issueItem(
-        item: item,
-        quantity: quantity,
+      await _transactionRepository.issueBon(
+        bonNumber: bonNumberController.text,
+        date: selectedDate,
+        items: transactionLines,
         recipient: recipientController.text,
         foreman: foremanController.text,
         assistant: assistantController.text,
@@ -139,6 +133,50 @@ class _TakeItemPageState extends State<TakeItemPage> {
     } finally {
       if (mounted) setState(() => isSaving = false);
     }
+  }
+
+  void _addLine() {
+    final item = selectedItem;
+    final quantity = int.tryParse(quantityController.text.trim());
+    if (item == null) {
+      _showMessage('Pilih barang terlebih dahulu');
+      return;
+    }
+    if (quantity == null || quantity <= 0) {
+      _showMessage('Jumlah harus berupa angka lebih dari 0');
+      return;
+    }
+    final existing = transactionLines.indexWhere(
+      (line) => line.item.id == item.id,
+    );
+    final currentQuantity = existing == -1
+        ? 0
+        : transactionLines[existing].quantity;
+    if (currentQuantity + quantity > item.stok) {
+      _showMessage('Jumlah melebihi stok tersedia (${item.stok})');
+      return;
+    }
+    setState(() {
+      if (existing == -1) {
+        transactionLines.add(TransactionLine(item: item, quantity: quantity));
+      } else {
+        transactionLines[existing] = TransactionLine(
+          item: item,
+          quantity: currentQuantity + quantity,
+        );
+      }
+      quantityController.text = '1';
+    });
+  }
+
+  Future<void> _pickTransactionDate() async {
+    final date = await showDatePicker(
+      context: context,
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now(),
+      initialDate: selectedDate,
+    );
+    if (date != null && mounted) setState(() => selectedDate = date);
   }
 
   Future<void> _pickDocumentationPhoto() async {
@@ -168,6 +206,22 @@ class _TakeItemPageState extends State<TakeItemPage> {
           : ListView(
               padding: const EdgeInsets.all(20),
               children: [
+                TextField(
+                  controller: bonNumberController,
+                  decoration: const InputDecoration(
+                    labelText: 'Nomor Bon (Opsional)',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                OutlinedButton.icon(
+                  onPressed: isSaving ? null : _pickTransactionDate,
+                  icon: const Icon(Icons.calendar_today),
+                  label: Text(
+                    'Tanggal Pengambilan: ${selectedDate.day.toString().padLeft(2, '0')}/${selectedDate.month.toString().padLeft(2, '0')}/${selectedDate.year}',
+                  ),
+                ),
+                const SizedBox(height: 16),
                 DropdownButtonFormField<String>(
                   initialValue: selectedCategory,
                   decoration: const InputDecoration(
@@ -197,25 +251,86 @@ class _TakeItemPageState extends State<TakeItemPage> {
                   },
                 ),
                 const SizedBox(height: 16),
-                DropdownButtonFormField<InventoryItem>(
-                  initialValue: selectedItem,
-                  isExpanded: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Barang',
-                    border: OutlineInputBorder(),
-                  ),
-                  items: filteredItems
-                      .map(
-                        (item) => DropdownMenuItem(
-                          value: item,
-                          child: Text(
-                            '${item.nama} (${item.kode}) - Stok ${item.stok}',
+                Autocomplete<InventoryItem>(
+                  displayStringForOption: (item) =>
+                      '${item.nama} (${item.kode})',
+
+                  optionsBuilder: (textEditingValue) {
+                    if (textEditingValue.text.isEmpty) {
+                      return filteredItems;
+                    }
+
+                    return filteredItems.where((item) {
+                      final query = textEditingValue.text.toLowerCase();
+
+                      return item.nama.toLowerCase().contains(query) ||
+                          item.kode.toLowerCase().contains(query);
+                    });
+                  },
+
+                  onSelected: (item) {
+                    setState(() {
+                      selectedItem = item;
+                    });
+                  },
+
+                  fieldViewBuilder:
+                      (context, controller, focusNode, onFieldSubmitted) {
+                        return TextField(
+                          controller: controller,
+                          focusNode: focusNode,
+                          decoration: const InputDecoration(
+                            labelText: 'Cari Barang',
+                            hintText: 'Ketik nama atau kode barang',
+                            border: OutlineInputBorder(),
+                            prefixIcon: Icon(Icons.search),
+                          ),
+                        );
+                      },
+
+                  optionsViewBuilder: (context, onSelected, options) {
+                    return Align(
+                      alignment: Alignment.topLeft,
+                      child: Material(
+                        elevation: 4,
+                        child: SizedBox(
+                          width: 500,
+                          height: 250,
+                          child: ListView.builder(
+                            itemCount: options.length,
+                            itemBuilder: (context, index) {
+                              final item = options.elementAt(index);
+
+                              return ListTile(
+                                title: Text(item.nama),
+                                subtitle: Text(
+                                  '${item.kode} • Stok ${item.stok}',
+                                ),
+                                onTap: () {
+                                  onSelected(item);
+                                },
+                              );
+                            },
                           ),
                         ),
-                      )
-                      .toList(),
-                  onChanged: (item) => setState(() => selectedItem = item),
+                      ),
+                    );
+                  },
                 ),
+                if (selectedItem != null) ...[
+                  const SizedBox(height: 12),
+
+                  Card(
+                    child: ListTile(
+                      leading: const Icon(Icons.inventory_2),
+                      title: Text(selectedItem!.nama),
+                      subtitle: Text(
+                        'Kode: ${selectedItem!.kode}\n'
+                        'Stok: ${selectedItem!.stok} ${selectedItem!.satuan}',
+                      ),
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 16),
                 DropdownButtonFormField<String>(
                   initialValue: selectedDivision,
@@ -244,6 +359,36 @@ class _TakeItemPageState extends State<TakeItemPage> {
                     border: OutlineInputBorder(),
                   ),
                 ),
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  onPressed: isSaving ? null : _addLine,
+                  icon: const Icon(Icons.playlist_add),
+                  label: const Text('Tambah ke Bon'),
+                ),
+                if (transactionLines.isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Isi Bon',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  ...transactionLines.asMap().entries.map(
+                    (entry) => ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: Text(entry.value.item.nama),
+                      subtitle: Text(
+                        '${entry.value.item.kode} - ${entry.value.quantity} ${entry.value.item.satuan}',
+                      ),
+                      trailing: IconButton(
+                        onPressed: isSaving
+                            ? null
+                            : () => setState(
+                                () => transactionLines.removeAt(entry.key),
+                              ),
+                        icon: const Icon(Icons.delete_outline),
+                      ),
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 16),
                 TextField(
                   controller: recipientController,

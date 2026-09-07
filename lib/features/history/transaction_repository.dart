@@ -3,6 +3,7 @@ import '../../models/inventory_item.dart';
 
 class TransactionHistory {
   final int id;
+  final String? bonNumber;
   final String itemName;
   final String itemCode;
   final String category;
@@ -19,6 +20,7 @@ class TransactionHistory {
 
   const TransactionHistory({
     required this.id,
+    required this.bonNumber,
     required this.itemName,
     required this.itemCode,
     required this.category,
@@ -37,6 +39,7 @@ class TransactionHistory {
   factory TransactionHistory.fromMap(Map<String, dynamic> map) {
     return TransactionHistory(
       id: map['id'] as int,
+      bonNumber: map['bon_number'] as String?,
       itemName: map['item_name'] as String,
       itemCode: map['item_code'] as String,
       category: map['category'] as String,
@@ -67,58 +70,76 @@ class TransactionRepository {
     required int divisionId,
     String? documentationPhotoPath,
   }) async {
-    if (item.id == null) {
-      throw Exception('Barang tidak memiliki ID yang valid');
+    await issueBon(
+      bonNumber: null,
+      date: DateTime.now(),
+      items: [TransactionLine(item: item, quantity: quantity)],
+      recipient: recipient,
+      foreman: foreman,
+      assistant: assistant,
+      note: note,
+      divisionId: divisionId,
+      documentationPhotoPath: documentationPhotoPath,
+    );
+  }
+
+  Future<void> issueBon({
+    required String? bonNumber,
+    required DateTime date,
+    required List<TransactionLine> items,
+    required String recipient,
+    required String foreman,
+    required String assistant,
+    required String note,
+    required int divisionId,
+    String? documentationPhotoPath,
+  }) async {
+    if (items.isEmpty) {
+      throw Exception('Tambahkan minimal satu barang');
     }
-    if (quantity <= 0) {
-      throw Exception('Jumlah pengambilan harus lebih dari 0');
-    }
-    if (quantity > item.stok) {
-      throw Exception('Stok tidak mencukupi');
+    final quantities = <int, int>{};
+    for (final line in items) {
+      if (line.item.id == null || line.quantity <= 0) {
+        throw Exception('Data barang atau jumlah tidak valid');
+      }
+      quantities.update(
+        line.item.id!,
+        (current) => current + line.quantity,
+        ifAbsent: () => line.quantity,
+      );
     }
 
     final db = await _databaseHelper.database;
     final now = DateTime.now().toIso8601String();
 
     await db.transaction((txn) async {
-      final currentRows = await txn.query(
-        'items',
-        columns: ['stok', 'harga_satuan'],
-        where: 'id = ?',
-        whereArgs: [item.id],
-        limit: 1,
-      );
-
-      if (currentRows.isEmpty) {
-        throw Exception('Barang tidak ditemukan');
+      final lines = <Map<String, dynamic>>[];
+      for (final entry in quantities.entries) {
+        final rows = await txn.query(
+          'items',
+          columns: ['stok', 'harga_satuan'],
+          where: 'id = ?',
+          whereArgs: [entry.key],
+          limit: 1,
+        );
+        if (rows.isEmpty || entry.value > (rows.first['stok'] as num)) {
+          throw Exception('Stok berubah atau tidak mencukupi');
+        }
+        final price = (rows.first['harga_satuan'] as num).toDouble();
+        lines.add({
+          'itemId': entry.key,
+          'quantity': entry.value,
+          'price': price,
+          'subtotal': entry.value * price,
+        });
       }
-
-      final currentStock = (currentRows.first['stok'] as num).toDouble();
-      final currentPrice = (currentRows.first['harga_satuan'] as num)
-          .toDouble();
-      if (quantity > currentStock) {
-        throw Exception('Stok berubah atau tidak mencukupi');
-      }
-
-      final updated = await txn.rawUpdate(
-        '''
-        UPDATE items
-        SET stok = stok - ?,
-            nilai_stok = (stok - ?) * harga_satuan
-        WHERE id = ? AND stok >= ?
-        ''',
-        [quantity, quantity, item.id, quantity],
-      );
-
-      if (updated != 1) {
-        throw Exception('Stok berubah atau tidak mencukupi');
-      }
-
-      final subtotal = quantity * currentPrice;
 
       final transactionId = await txn.insert('transactions', {
+        'nomor_bon': bonNumber?.trim().isEmpty ?? true
+            ? null
+            : bonNumber!.trim(),
         'nomor_ba': null,
-        'tanggal': now,
+        'tanggal': date.toIso8601String(),
         'jenis': 'keluar',
         'divisi_id': divisionId,
         'penerima': recipient.trim().isEmpty ? null : recipient.trim(),
@@ -126,17 +147,38 @@ class TransactionRepository {
         'nama_asisten': assistant.trim().isEmpty ? null : assistant.trim(),
         'keterangan': note.trim().isEmpty ? null : note.trim(),
         'foto_dokumentasi': documentationPhotoPath,
-        'total_nilai': subtotal,
+        'total_nilai': lines.fold<double>(
+          0,
+          (total, line) => total + (line['subtotal'] as double),
+        ),
         'created_at': now,
       });
 
-      await txn.insert('transaction_details', {
-        'transaction_id': transactionId,
-        'item_id': item.id,
-        'qty': quantity,
-        'harga': currentPrice,
-        'subtotal': subtotal,
-      });
+      for (final line in lines) {
+        final updated = await txn.rawUpdate(
+          '''
+          UPDATE items
+          SET stok = stok - ?,
+              nilai_stok = (stok - ?) * harga_satuan
+          WHERE id = ? AND stok >= ?
+          ''',
+          [
+            line['quantity'],
+            line['quantity'],
+            line['itemId'],
+            line['quantity'],
+          ],
+        );
+        if (updated != 1) throw Exception('Stok berubah atau tidak mencukupi');
+
+        await txn.insert('transaction_details', {
+          'transaction_id': transactionId,
+          'item_id': line['itemId'],
+          'qty': line['quantity'],
+          'harga': line['price'],
+          'subtotal': line['subtotal'],
+        });
+      }
     });
   }
 
@@ -145,6 +187,7 @@ class TransactionRepository {
     final result = await db.rawQuery('''
       SELECT
         t.id,
+        t.nomor_bon AS bon_number,
         i.nama AS item_name,
         i.kode AS item_code,
         i.kategori AS category,
@@ -205,4 +248,11 @@ class TransactionRepository {
         row['division'] as String: (row['total'] as num).toInt(),
     };
   }
+}
+
+class TransactionLine {
+  final InventoryItem item;
+  final int quantity;
+
+  const TransactionLine({required this.item, required this.quantity});
 }

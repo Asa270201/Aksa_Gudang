@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../models/inventory_item.dart';
 import 'add_item_page.dart';
+import 'edit_item_page.dart';
 import 'inventory_repository.dart';
 import 'take_item_page.dart';
 
@@ -102,9 +103,21 @@ class _InventoryPageState extends State<InventoryPage> {
             Expanded(
               child: TabBarView(
                 children: [
-                  _ItemList(category: 'APD', searchQuery: _searchQuery),
-                  _ItemList(category: 'Alat Panen', searchQuery: _searchQuery),
-                  _ItemList(category: 'Umum', searchQuery: _searchQuery),
+                  _ItemList(
+                    category: 'APD',
+                    searchQuery: _searchQuery,
+                    onChanged: () => setState(() {}),
+                  ),
+                  _ItemList(
+                    category: 'Alat Panen',
+                    searchQuery: _searchQuery,
+                    onChanged: () => setState(() {}),
+                  ),
+                  _ItemList(
+                    category: 'Umum',
+                    searchQuery: _searchQuery,
+                    onChanged: () => setState(() {}),
+                  ),
                 ],
               ),
             ),
@@ -118,9 +131,14 @@ class _InventoryPageState extends State<InventoryPage> {
 class _ItemList extends StatelessWidget {
   final String category;
   final String searchQuery;
+  final VoidCallback onChanged;
   static final InventoryRepository _repository = InventoryRepository();
 
-  const _ItemList({required this.category, required this.searchQuery});
+  const _ItemList({
+    required this.category,
+    required this.searchQuery,
+    required this.onChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -239,6 +257,27 @@ class _ItemList extends StatelessWidget {
                                 ),
                               ),
                             ),
+
+                            if (item.stok <= item.stokMinimum) ...[
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.red.withOpacity(.15),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: const Text(
+                                  'Kritis',
+                                  style: TextStyle(
+                                    color: Colors.redAccent,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ],
                         ),
                       ],
@@ -250,7 +289,45 @@ class _ItemList extends StatelessWidget {
                       PopupMenuItem(value: 'edit', child: Text('Edit')),
                       PopupMenuItem(value: 'delete', child: Text('Hapus')),
                     ],
-                    onSelected: (value) {},
+                    onSelected: (value) async {
+                      if (value == 'delete') {
+                        final confirmed = await showDialog<bool>(
+                          context: context,
+                          builder: (dialogContext) => AlertDialog(
+                            title: const Text('Hapus barang?'),
+                            content: Text('Data ${item.nama} akan dihapus.'),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(dialogContext),
+                                child: const Text('Batal'),
+                              ),
+                              FilledButton(
+                                onPressed: () =>
+                                    Navigator.pop(dialogContext, true),
+                                child: const Text('Hapus'),
+                              ),
+                            ],
+                          ),
+                        );
+
+                        if (confirmed == true) {
+                          await _repository.deleteItem(item.id!);
+                          onChanged();
+                        }
+                        return;
+                      }
+
+                      final itemEdited = await Navigator.push<bool>(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => EditItemPage(item: item),
+                        ),
+                      );
+
+                      if (itemEdited == true) {
+                        onChanged();
+                      }
+                    },
                   ),
                 ],
               ),
