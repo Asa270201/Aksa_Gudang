@@ -62,7 +62,7 @@ class TransactionRepository {
 
   Future<void> issueItem({
     required InventoryItem item,
-    required int quantity,
+    required double quantity,
     required String recipient,
     required String foreman,
     required String assistant,
@@ -97,7 +97,7 @@ class TransactionRepository {
     if (items.isEmpty) {
       throw Exception('Tambahkan minimal satu barang');
     }
-    final quantities = <int, int>{};
+    final quantities = <int, double>{};
     for (final line in items) {
       if (line.item.id == null || line.quantity <= 0) {
         throw Exception('Data barang atau jumlah tidak valid');
@@ -212,6 +212,53 @@ class TransactionRepository {
     return result.map(TransactionHistory.fromMap).toList();
   }
 
+  Future<void> cancelTransaction(int transactionId) async {
+    final db = await _databaseHelper.database;
+
+    await db.transaction((txn) async {
+      final transactionRows = await txn.query(
+        'transactions',
+        columns: ['id', 'jenis'],
+        where: 'id = ? AND jenis = ?',
+        whereArgs: [transactionId, 'keluar'],
+        limit: 1,
+      );
+      if (transactionRows.isEmpty) {
+        throw Exception('Transaksi sudah dibatalkan atau tidak ditemukan');
+      }
+
+      final details = await txn.query(
+        'transaction_details',
+        columns: ['item_id', 'qty'],
+        where: 'transaction_id = ?',
+        whereArgs: [transactionId],
+      );
+
+      for (final detail in details) {
+        final quantity = (detail['qty'] as num).toDouble();
+        final updated = await txn.rawUpdate(
+          '''
+          UPDATE items
+          SET stok = stok + ?,
+              nilai_stok = (stok + ?) * harga_satuan
+          WHERE id = ?
+          ''',
+          [quantity, quantity, detail['item_id']],
+        );
+        if (updated != 1) {
+          throw Exception('Barang transaksi tidak ditemukan');
+        }
+      }
+
+      await txn.update(
+        'transactions',
+        {'jenis': 'batal'},
+        where: 'id = ? AND jenis = ?',
+        whereArgs: [transactionId, 'keluar'],
+      );
+    });
+  }
+
   Future<List<String>> getDivisions() async {
     final db = await _databaseHelper.database;
     final result = await db.query('divisions', orderBy: 'id ASC');
@@ -252,7 +299,7 @@ class TransactionRepository {
 
 class TransactionLine {
   final InventoryItem item;
-  final int quantity;
+  final double quantity;
 
   const TransactionLine({required this.item, required this.quantity});
 }

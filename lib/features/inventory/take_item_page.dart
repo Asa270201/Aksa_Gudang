@@ -137,7 +137,9 @@ class _TakeItemPageState extends State<TakeItemPage> {
 
   void _addLine() {
     final item = selectedItem;
-    final quantity = int.tryParse(quantityController.text.trim());
+    final quantity = double.tryParse(
+      quantityController.text.trim().replaceAll(',', '.'),
+    );
     if (item == null) {
       _showMessage('Pilih barang terlebih dahulu');
       return;
@@ -150,7 +152,7 @@ class _TakeItemPageState extends State<TakeItemPage> {
       (line) => line.item.id == item.id,
     );
     final currentQuantity = existing == -1
-        ? 0
+        ? 0.0
         : transactionLines[existing].quantity;
     if (currentQuantity + quantity > item.stok) {
       _showMessage('Jumlah melebihi stok tersedia (${item.stok})');
@@ -353,7 +355,9 @@ class _TakeItemPageState extends State<TakeItemPage> {
                 const SizedBox(height: 16),
                 TextField(
                   controller: quantityController,
-                  keyboardType: TextInputType.number,
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
                   decoration: const InputDecoration(
                     labelText: 'Jumlah Diambil',
                     border: OutlineInputBorder(),

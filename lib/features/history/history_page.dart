@@ -251,7 +251,10 @@ class _HistoryPageState extends State<HistoryPage> {
                   ...filteredHistory.map(
                     (item) => Padding(
                       padding: const EdgeInsets.only(bottom: 12),
-                      child: _HistoryCard(item: item),
+                      child: _HistoryCard(
+                        item: item,
+                        onCancel: () => _cancelTransaction(item),
+                      ),
                     ),
                   ),
               ],
@@ -260,6 +263,39 @@ class _HistoryPageState extends State<HistoryPage> {
         },
       ),
     );
+  }
+
+  Future<void> _cancelTransaction(TransactionHistory item) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Batalkan transaksi?'),
+        content: Text(
+          'Stok dari transaksi ${item.bonNumber == null ? '' : 'bon ${item.bonNumber} '}akan dikembalikan.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Tidak'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Batalkan'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    try {
+      await _repository.cancelTransaction(item.id);
+      if (mounted) {
+        _showMessage('Transaksi berhasil dibatalkan dan stok dikembalikan');
+        _reload();
+      }
+    } catch (error) {
+      if (mounted) _showMessage('Gagal membatalkan transaksi: $error');
+    }
   }
 }
 
@@ -366,8 +402,9 @@ class _FilterPanel extends StatelessWidget {
 
 class _HistoryCard extends StatelessWidget {
   final TransactionHistory item;
+  final VoidCallback onCancel;
 
-  const _HistoryCard({required this.item});
+  const _HistoryCard({required this.item, required this.onCancel});
 
   @override
   Widget build(BuildContext context) {
@@ -418,6 +455,15 @@ class _HistoryCard extends StatelessWidget {
                 if (item.documentationPhotoPath != null)
                   Text('Foto Dokumentasi: ${item.documentationPhotoPath}'),
                 Text('Nilai: Rp ${item.subtotal.toStringAsFixed(0)}'),
+                const SizedBox(height: 12),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: OutlinedButton.icon(
+                    onPressed: onCancel,
+                    icon: const Icon(Icons.undo),
+                    label: const Text('Batalkan transaksi'),
+                  ),
+                ),
               ],
             ),
           ),

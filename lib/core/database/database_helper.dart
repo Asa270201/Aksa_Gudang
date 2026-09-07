@@ -109,7 +109,7 @@ class DatabaseHelper {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         transaction_id INTEGER NOT NULL,
         item_id INTEGER NOT NULL,
-        qty INTEGER NOT NULL,
+        qty REAL NOT NULL,
         harga REAL NOT NULL,
         subtotal REAL NOT NULL,
 
