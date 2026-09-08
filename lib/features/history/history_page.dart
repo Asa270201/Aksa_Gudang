@@ -16,12 +16,14 @@ class HistoryPage extends StatefulWidget {
 
 class _HistoryPageState extends State<HistoryPage> {
   final TransactionRepository _repository = TransactionRepository();
+  final TextEditingController bonNumberController = TextEditingController();
   late Future<List<TransactionHistory>> _historyFuture;
   bool isExporting = false;
   DateTime? startDate;
   DateTime? endDate;
   String selectedDivision = 'Semua Divisi';
   String selectedItem = 'Semua Barang';
+  String bonNumberQuery = '';
 
   @override
   void initState() {
@@ -31,6 +33,12 @@ class _HistoryPageState extends State<HistoryPage> {
     endDate = null;
     selectedDivision = 'Semua Divisi';
     selectedItem = 'Semua Barang';
+  }
+
+  @override
+  void dispose() {
+    bonNumberController.dispose();
+    super.dispose();
   }
 
   void _reload() {
@@ -67,7 +75,17 @@ class _HistoryPageState extends State<HistoryPage> {
           item.division == selectedDivision;
       final matchesItem =
           selectedItem == 'Semua Barang' || item.itemName == selectedItem;
-      return matchesStart && matchesEnd && matchesDivision && matchesItem;
+      final matchesBonNumber =
+          bonNumberQuery.trim().isEmpty ||
+          (item.bonNumber?.toLowerCase().contains(
+                bonNumberQuery.trim().toLowerCase(),
+              ) ??
+              false);
+      return matchesStart &&
+          matchesEnd &&
+          matchesDivision &&
+          matchesItem &&
+          matchesBonNumber;
     }).toList();
   }
 
@@ -83,6 +101,7 @@ class _HistoryPageState extends State<HistoryPage> {
       final rows = <List<String>>[
         [
           'Tanggal',
+          'Nomor Bon',
           'Barang',
           'Kode',
           'Kategori',
@@ -99,6 +118,7 @@ class _HistoryPageState extends State<HistoryPage> {
         ...history.map(
           (item) => [
             item.date.toLocal().toIso8601String(),
+            item.bonNumber ?? '',
             item.itemName,
             item.itemCode,
             item.category,
@@ -213,17 +233,23 @@ class _HistoryPageState extends State<HistoryPage> {
                   items: items,
                   selectedDivision: selectedDivision,
                   selectedItem: selectedItem,
+                  bonNumberQuery: bonNumberQuery,
+                  bonNumberController: bonNumberController,
                   onStartDate: () => _pickDate(start: true),
                   onEndDate: () => _pickDate(start: false),
                   onDivisionChanged: (value) =>
                       setState(() => selectedDivision = value),
                   onItemChanged: (value) =>
                       setState(() => selectedItem = value),
+                  onBonNumberChanged: (value) =>
+                      setState(() => bonNumberQuery = value),
                   onClear: () => setState(() {
                     startDate = null;
                     endDate = null;
                     selectedDivision = 'Semua Divisi';
                     selectedItem = 'Semua Barang';
+                    bonNumberQuery = '';
+                    bonNumberController.clear();
                   }),
                 ),
                 const SizedBox(height: 12),
@@ -306,10 +332,13 @@ class _FilterPanel extends StatelessWidget {
   final List<String> items;
   final String selectedDivision;
   final String selectedItem;
+  final String bonNumberQuery;
+  final TextEditingController bonNumberController;
   final VoidCallback onStartDate;
   final VoidCallback onEndDate;
   final ValueChanged<String> onDivisionChanged;
   final ValueChanged<String> onItemChanged;
+  final ValueChanged<String> onBonNumberChanged;
   final VoidCallback onClear;
 
   const _FilterPanel({
@@ -319,10 +348,13 @@ class _FilterPanel extends StatelessWidget {
     required this.items,
     required this.selectedDivision,
     required this.selectedItem,
+    required this.bonNumberQuery,
+    required this.bonNumberController,
     required this.onStartDate,
     required this.onEndDate,
     required this.onDivisionChanged,
     required this.onItemChanged,
+    required this.onBonNumberChanged,
     required this.onClear,
   });
 
@@ -353,6 +385,17 @@ class _FilterPanel extends StatelessWidget {
               ),
             ),
           ],
+        ),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: bonNumberController,
+          decoration: const InputDecoration(
+            labelText: 'Nomor Bon',
+            hintText: 'Contoh: 7/SSE/2/IX/2026',
+            border: OutlineInputBorder(),
+            prefixIcon: Icon(Icons.receipt_long),
+          ),
+          onChanged: onBonNumberChanged,
         ),
         const SizedBox(height: 8),
         DropdownButtonFormField<String>(

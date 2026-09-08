@@ -186,7 +186,7 @@ class _ItemList extends StatelessWidget {
                     width: 60,
                     height: 60,
                     decoration: BoxDecoration(
-                      color: _getColor().withOpacity(.15),
+                      color: _getColor().withValues(alpha: .15),
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Icon(_getIcon(), color: _getColor(), size: 28),
@@ -226,13 +226,15 @@ class _ItemList extends StatelessWidget {
                                 vertical: 4,
                               ),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF50C878).withOpacity(.15),
+                                color: const Color(
+                                  0xFF50C878,
+                                ).withValues(alpha: .15),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Text(
                                 'Stok ${item.stok}',
                                 style: const TextStyle(
-                                  color: const Color(0xFF50C878),
+                                  color: Color(0xFF50C878),
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -246,13 +248,15 @@ class _ItemList extends StatelessWidget {
                                 vertical: 4,
                               ),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF63B3ED).withOpacity(.15),
+                                color: const Color(
+                                  0xFF63B3ED,
+                                ).withValues(alpha: .15),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Text(
                                 'Rp ${item.hargaSatuan.toStringAsFixed(0)}',
                                 style: const TextStyle(
-                                  color: const Color(0xFF63B3ED),
+                                  color: Color(0xFF63B3ED),
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -266,7 +270,7 @@ class _ItemList extends StatelessWidget {
                                   vertical: 4,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: Colors.red.withOpacity(.15),
+                                  color: Colors.red.withValues(alpha: .15),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: const Text(

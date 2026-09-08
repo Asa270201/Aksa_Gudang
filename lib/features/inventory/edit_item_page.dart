@@ -90,6 +90,8 @@ class _EditItemPageState extends State<EditItemPage> {
         hargaSatuan: hargaSatuan,
         nilaiStok: stok * hargaSatuan,
         stokMinimum: stokMinimum,
+        sudahPr: widget.item.sudahPr,
+        sudahDatang: widget.item.sudahDatang,
         createdAt: widget.item.createdAt,
       );
 

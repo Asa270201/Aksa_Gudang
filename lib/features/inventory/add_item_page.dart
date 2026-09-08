@@ -114,7 +114,7 @@ class _AddItemPageState extends State<AddItemPage> {
           const SizedBox(height: 16),
 
           DropdownButtonFormField<String>(
-            value: kategori,
+            initialValue: kategori,
             decoration: _inputDecoration('Kategori'),
             items: const [
               DropdownMenuItem(value: 'APD', child: Text('APD')),

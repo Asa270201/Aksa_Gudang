@@ -71,7 +71,6 @@ class TransactionRepository {
     String? documentationPhotoPath,
   }) async {
     await issueBon(
-      bonNumber: null,
       date: DateTime.now(),
       items: [TransactionLine(item: item, quantity: quantity)],
       recipient: recipient,
@@ -84,7 +83,6 @@ class TransactionRepository {
   }
 
   Future<void> issueBon({
-    required String? bonNumber,
     required DateTime date,
     required List<TransactionLine> items,
     required String recipient,
@@ -113,6 +111,40 @@ class TransactionRepository {
     final now = DateTime.now().toIso8601String();
 
     await db.transaction((txn) async {
+      final divisionRows = await txn.query(
+        'divisions',
+        columns: ['nama'],
+        where: 'id = ?',
+        whereArgs: [divisionId],
+        limit: 1,
+      );
+      if (divisionRows.isEmpty) {
+        throw Exception('Divisi tidak ditemukan');
+      }
+
+      final monthStart = DateTime(date.year, date.month);
+      final nextMonth = DateTime(date.year, date.month + 1);
+      final existingTransactions = await txn.query(
+        'transactions',
+        columns: ['nomor_bon'],
+        where: "tanggal >= ? AND tanggal < ? AND nomor_bon IS NOT NULL",
+        whereArgs: [monthStart.toIso8601String(), nextMonth.toIso8601String()],
+      );
+      var nextNumber = 1;
+      for (final transaction in existingTransactions) {
+        final value = transaction['nomor_bon'] as String?;
+        final number = int.tryParse(value?.split('/').first.trim() ?? '');
+        if (number != null && number >= nextNumber) {
+          nextNumber = number + 1;
+        }
+      }
+      final divisionName = divisionRows.first['nama'] as String;
+      final divisionCode = divisionName == 'Kantor Umum'
+          ? '90'
+          : divisionName.replaceFirst('Divisi ', '').trim();
+      final generatedBonNumber =
+          '$nextNumber/SSE/$divisionCode/${_romanMonth(date.month)}/${date.year}';
+
       final lines = <Map<String, dynamic>>[];
       for (final entry in quantities.entries) {
         final rows = await txn.query(
@@ -135,9 +167,7 @@ class TransactionRepository {
       }
 
       final transactionId = await txn.insert('transactions', {
-        'nomor_bon': bonNumber?.trim().isEmpty ?? true
-            ? null
-            : bonNumber!.trim(),
+        'nomor_bon': generatedBonNumber,
         'nomor_ba': null,
         'tanggal': date.toIso8601String(),
         'jenis': 'keluar',
@@ -180,6 +210,24 @@ class TransactionRepository {
         });
       }
     });
+  }
+
+  String _romanMonth(int month) {
+    const months = [
+      'I',
+      'II',
+      'III',
+      'IV',
+      'V',
+      'VI',
+      'VII',
+      'VIII',
+      'IX',
+      'X',
+      'XI',
+      'XII',
+    ];
+    return months[month - 1];
   }
 
   Future<List<TransactionHistory>> getHistory() async {

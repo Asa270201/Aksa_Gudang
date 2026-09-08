@@ -16,7 +16,6 @@ class _TakeItemPageState extends State<TakeItemPage> {
   final InventoryRepository _inventoryRepository = InventoryRepository();
   final TransactionRepository _transactionRepository = TransactionRepository();
   final recipientController = TextEditingController();
-  final bonNumberController = TextEditingController();
   final foremanController = TextEditingController();
   final assistantController = TextEditingController();
   final noteController = TextEditingController();
@@ -50,7 +49,6 @@ class _TakeItemPageState extends State<TakeItemPage> {
   @override
   void dispose() {
     recipientController.dispose();
-    bonNumberController.dispose();
     foremanController.dispose();
     assistantController.dispose();
     noteController.dispose();
@@ -114,7 +112,6 @@ class _TakeItemPageState extends State<TakeItemPage> {
     setState(() => isSaving = true);
     try {
       await _transactionRepository.issueBon(
-        bonNumber: bonNumberController.text,
         date: selectedDate,
         items: transactionLines,
         recipient: recipientController.text,
@@ -208,12 +205,11 @@ class _TakeItemPageState extends State<TakeItemPage> {
           : ListView(
               padding: const EdgeInsets.all(20),
               children: [
-                TextField(
-                  controller: bonNumberController,
-                  decoration: const InputDecoration(
-                    labelText: 'Nomor Bon (Opsional)',
-                    border: OutlineInputBorder(),
-                  ),
+                const ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Icon(Icons.auto_awesome),
+                  title: Text('Nomor bon dibuat otomatis'),
+                  subtitle: Text('Nomor berurutan dan direset setiap bulan.'),
                 ),
                 const SizedBox(height: 16),
                 OutlinedButton.icon(

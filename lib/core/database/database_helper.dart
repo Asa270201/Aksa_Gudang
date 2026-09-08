@@ -27,7 +27,7 @@ class DatabaseHelper {
 
     return openDatabase(
       path,
-      version: 8,
+      version: 10,
       onCreate: _createDatabase,
       onUpgrade: _onUpgrade,
       onConfigure: (db) async {
@@ -59,6 +59,10 @@ class DatabaseHelper {
       nilai_stok REAL NOT NULL,
 
       stok_minimum REAL NOT NULL DEFAULT 0,
+
+      status_pr INTEGER NOT NULL DEFAULT 0,
+
+      status_datang INTEGER NOT NULL DEFAULT 0,
 
       created_at TEXT NOT NULL
     )
@@ -180,6 +184,18 @@ class DatabaseHelper {
 
     if (oldVersion < 8) {
       await db.execute('ALTER TABLE transactions ADD COLUMN nomor_bon TEXT');
+    }
+
+    if (oldVersion < 9) {
+      await db.execute(
+        'ALTER TABLE items ADD COLUMN status_pr INTEGER NOT NULL DEFAULT 0',
+      );
+    }
+
+    if (oldVersion < 10) {
+      await db.execute(
+        'ALTER TABLE items ADD COLUMN status_datang INTEGER NOT NULL DEFAULT 0',
+      );
     }
   }
 

@@ -83,6 +83,34 @@ class InventoryRepository {
     );
   }
 
+  Future<int> updatePrStatus({
+    required int itemId,
+    required bool sudahPr,
+  }) async {
+    final db = await _databaseHelper.database;
+
+    return db.update(
+      'items',
+      {'status_pr': sudahPr ? 1 : 0},
+      where: 'id = ?',
+      whereArgs: [itemId],
+    );
+  }
+
+  Future<int> updateArrivalStatus({
+    required int itemId,
+    required bool sudahDatang,
+  }) async {
+    final db = await _databaseHelper.database;
+
+    return db.update(
+      'items',
+      {'status_datang': sudahDatang ? 1 : 0},
+      where: 'id = ?',
+      whereArgs: [itemId],
+    );
+  }
+
   /// Hapus Barang
   Future<int> deleteItem(int id) async {
     final db = await _databaseHelper.database;
@@ -129,6 +157,7 @@ class InventoryRepository {
       SELECT *
       FROM items
       WHERE stok <= stok_minimum
+        AND status_datang = 0
       ORDER BY stok ASC
       ''');
 

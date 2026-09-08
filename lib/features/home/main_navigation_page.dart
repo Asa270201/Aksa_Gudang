@@ -5,7 +5,7 @@ import '../dashboard/dashboard_page.dart';
 import '../history/history_page.dart';
 import '../inventory/inventory_page.dart';
 import '../reports/reports_page.dart';
-import '../settings/settings_page.dart';
+import '../stock_kritis/stock_kritis_page.dart';
 
 class MainNavigationPage extends StatefulWidget {
   const MainNavigationPage({super.key});
@@ -23,7 +23,7 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
     ImportPage(),
     HistoryPage(),
     ReportsPage(),
-    SettingsPage(),
+    StockKritisPage(),
   ];
 
   @override
@@ -80,8 +80,8 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
                 ),
                 const SizedBox(width: 10),
                 _NavItem(
-                  icon: Icons.settings,
-                  label: 'Settings',
+                  icon: Icons.warning_amber_rounded,
+                  label: 'Stok Kritis',
                   selected: currentIndex == 5,
                   onTap: () => _selectPage(5),
                 ),

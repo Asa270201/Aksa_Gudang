@@ -11,6 +11,8 @@ class InventoryItem {
   final double nilaiStok;
 
   final double stokMinimum;
+  final bool sudahPr;
+  final bool sudahDatang;
 
   final DateTime createdAt;
 
@@ -24,6 +26,8 @@ class InventoryItem {
     required this.hargaSatuan,
     required this.nilaiStok,
     required this.stokMinimum,
+    this.sudahPr = false,
+    this.sudahDatang = false,
     required this.createdAt,
   });
 
@@ -38,6 +42,8 @@ class InventoryItem {
       'harga_satuan': hargaSatuan,
       'nilai_stok': nilaiStok,
       'stok_minimum': stokMinimum,
+      'status_pr': sudahPr ? 1 : 0,
+      'status_datang': sudahDatang ? 1 : 0,
       'created_at': createdAt.toIso8601String(),
     };
   }
@@ -53,6 +59,8 @@ class InventoryItem {
       hargaSatuan: (map['harga_satuan'] as num).toDouble(),
       nilaiStok: (map['nilai_stok'] as num).toDouble(),
       stokMinimum: (map['stok_minimum'] as num).toDouble(),
+      sudahPr: (map['status_pr'] as num?)?.toInt() == 1,
+      sudahDatang: (map['status_datang'] as num?)?.toInt() == 1,
       createdAt: DateTime.parse(map['created_at']),
     );
   }

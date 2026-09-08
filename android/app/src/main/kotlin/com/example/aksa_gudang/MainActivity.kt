@@ -32,6 +32,7 @@ class MainActivity : FlutterActivity() {
 
 				val fileName = call.argument<String>("fileName")
 				val bytes = call.argument<ByteArray>("bytes")
+				val mimeType = call.argument<String>("mimeType") ?: "text/csv"
 				if (fileName == null || bytes == null) {
 					result.error("INVALID_DATA", "Data file tidak lengkap", null)
 					return@setMethodCallHandler
@@ -39,7 +40,7 @@ class MainActivity : FlutterActivity() {
 
 				val values = ContentValues().apply {
 					put(MediaStore.Downloads.DISPLAY_NAME, fileName)
-					put(MediaStore.Downloads.MIME_TYPE, "text/csv")
+					put(MediaStore.Downloads.MIME_TYPE, mimeType)
 					put(
 						MediaStore.Downloads.RELATIVE_PATH,
 						Environment.DIRECTORY_DOWNLOADS,
